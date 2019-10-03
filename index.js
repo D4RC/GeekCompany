@@ -115,7 +115,7 @@ let PanelAgregar = {
             nuevo: {
                 criterio: '',
                 tipo: '',
-                ponderacion: 20,
+                ponderacion: 0,
                 mejor_calif: ''
             }
         }
@@ -123,16 +123,24 @@ let PanelAgregar = {
     methods: {
         Agregar: function(){
             store.commit('addCriterio', Object.assign({}, this.nuevo))
+
+            //Reiniciar 
+            this.nuevo.criterio=''
+            this.nuevo.tipo=''
+            this.nuevo.mejor_calif=''
+
+            //Emitiendo a componente:principal
+            this.$emit('no-mostrar')
         }
     },
     template: `
     <div class="box">
         <div>
-            <form>
+            <form id="formAg" v-on:submit.prevent="Agregar">
                 <div class="field has-text-left">
                     <label class="label">Nuevo criterio</label>
                     <div class="control">
-                        <input class="input" type="text" v-model="nuevo.criterio">
+                        <input class="input" type="text" v-model="nuevo.criterio" required>
                     </div>
                 </div>
                 <br>
@@ -143,13 +151,13 @@ let PanelAgregar = {
                         <div class="field">
                             <div class="control">
                                 <label class="radio">
-                                    <input type="radio" name="Tipo" value="Cuantitativo" v-model="nuevo.tipo">
+                                    <input type="radio" name="Tipo" value="Cuantitativo" v-model="nuevo.tipo" required>
                                     Cuantitativo (El criterio acepta valores numéricos)
                                 </label>
                             </div>
                             <div class="control">
                                 <label class="radio">
-                                    <input type="radio" name="Tipo" value="Cualitativo" v-model="nuevo.tipo">
+                                    <input type="radio" name="Tipo" value="Cualitativo" v-model="nuevo.tipo" required>
                                     Cualitativo (Se elige una de las categorias establecidas)
                                 </label>
                             </div>
@@ -161,7 +169,7 @@ let PanelAgregar = {
                     <label class="label">Mejor calificación es otorgada al valor</label>
                     <div class="control">
                         <div class="select">
-                            <select v-model="nuevo.mejor_calif">
+                            <select v-model="nuevo.mejor_calif" required>
                                 <option>Menor</option>
                                 <option>Mayor</option>
                             </select>
@@ -172,7 +180,7 @@ let PanelAgregar = {
         </div>
 
         <br>
-        <a class="button is-link is-fullwidth" v-on:click="Agregar">Añadir</a>
+        <button type="submit" form="formAg" class="button is-link is-fullwidth">Añadir</button>
     </div>`
 }
 
@@ -202,7 +210,6 @@ let principal = {
         </section>
         -->
 
-
         <section class="section">
         <div class="container">
             <tabla></tabla>
@@ -220,7 +227,7 @@ let principal = {
         >
             <div class="modal-background" v-on:click="mostrar=false"></div>
             <div class="modal-content">
-                <agregar></agregar>
+                <agregar v-on:no-mostrar="mostrar=false"></agregar>
             </div>
             <button class="modal-close is-large"
             @click="mostrar=false"></button>
