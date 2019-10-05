@@ -32,30 +32,30 @@ const store = new Vuex.Store({
                 ponderacion: 20,
                 mejor_calif: 'mayor'
             }
-        ]
+        ],
+        proyectos: [
+            {
+                identificador: 'A',
+                descripcion: '',
+                costo: ''
+            },
+            {
+                identificador: 'B',
+                descripcion: '',
+                costo: ''
+            },
+            {
+                identificador: 'C',
+                descripcion: '',
+                costo: ''
+            },
+            {
+                identificador: 'D',
+                descripcion: '',
+                costo: ''
+            }
+        ],
     },
-    proyectos: [
-        {
-            identificador: 'A',
-            descripcion: '',
-            costo: ''
-        },
-        {
-            identificador: 'B',
-            descripcion: '',
-            costo: ''
-        },
-        {
-            identificador: 'C',
-            descripcion: '',
-            costo: ''
-        },
-        {
-            identificador: 'D',
-            descripcion: '',
-            costo: ''
-        }
-    ],
     mutations: {
         addCriterio: (state, nuevo) => {
             state.criterios.push(nuevo);
@@ -258,9 +258,113 @@ let principal = {
     `
 }
 
+let estructura = {
+    data() {
+        return {
+            Scriterios: {},
+            edicion: true,
+            priority: false
+        }
+    },
+    created() {
+        this.Scriterios = this.estructura();
+        console.log(this.Scriterios)
+    },
+    methods: {
+        estructura() {
+            return store.state.criterios.map((criterio)=>{
+                var fila = {}
+                fila['tipo'] = (criterio.tipo==='Cuantitativo')? true:false;
+                fila['orden'] = (criterio.mejor_calif==='mayor')? true:false;
+            
+                var columnas = store.state.proyectos.map((proyecto, i)=>{
+                    var columna = {}
+                    columna['indice'] = i;
+                    columna['valor'] = null;
+                    columna['prioridad'] = null;
+                    return columna
+                })
+                fila['proyectos'] = columnas;
+                return fila;
+            })
+        },
+        ordenar(x) {
+            //Considerando[omitiendo] una previa conversión cuantitativa de los valores cualitativos
+            if(x.orden) 
+                x.proyectos.sort((a,b)=>{return a.valor-b.valor});
+            else 
+                x.proyectos.sort((a,b)=>{return b.valor-a.valor});
+        },
+        prioridad(x) {
+            //Asignación de prioridad basada en ordenamiento
+            x.proyectos.map((proyecto,i)=> {
+                proyecto.prioridad = 2*i + 1;
+            })
+            
+            //Restricción a criterios empatados
+            x.proyectos.forEach((proyecto,i) => {
+                if(i!==0)
+                    if(proyecto.valor===x.proyectos[i-1].valor)
+                        proyecto.prioridad=x.proyectos[i-1].prioridad;
+            });
+            
+            //Restructuración del orden indexado
+            x.proyectos.sort((a,b)=>{return a.indice-b.indice});
+        },
+        calcular() {
+            this.edicion=false
+            this.Scriterios.map((criterio)=>{
+                this.ordenar(criterio)
+            })
+            
+            this.Scriterios.map((criterio)=>{
+                this.prioridad(criterio)
+            })
+            this.priority=true
+        }
+    },
+    template: `
+    <div>
+    <table>
+        <thead>
+            <tr>
+                <th>Criterio</th>
+            </tr>
+        </thead>
+        <tbody v-if="edicion">
+            <tr v-for="(criterio,i) in Scriterios" :key="i">
+                <td v-for="(proyecto,j) in criterio.proyectos" :key="j">
+                    <input v-if="criterio.tipo" type="number" v-model.number="proyecto.valor">
+                    <select v-else v-model.number="proyecto.valor">
+                        <option value="1">Muy bajo</option>
+                        <option value="2">Bajo</option>
+                        <option value="3">Moderado</option>
+                        <option value="4">Alto</option>
+                        <option value="5">Muy alto</option>
+                    </select>
+                </td>
+            </tr>
+        </tbody>
+        <tbody v-else>
+            <tr v-for="(criterio,i) in Scriterios" :key="i">
+                    <td v-for="proyecto in criterio.proyectos" :key="proyecto.indice">
+                        <span v-if="priority"> {{ proyecto.prioridad }} </span>
+                        <span v-else> {{proyecto.valor }} </span>
+                    </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button @click="calcular">Calcular</button>
+    </div>
+    `
+}
+
+
 //Direcciones
 const routes = [
-    {path: '/', component: principal}
+    {path: '/', component: principal},
+    {path: '/s', component: estructura}
 ]
 
 const router = new VueRouter({
@@ -271,3 +375,4 @@ const router = new VueRouter({
 var app = new Vue({
     router
 }).$mount('#app')
+
