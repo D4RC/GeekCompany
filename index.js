@@ -34,6 +34,28 @@ const store = new Vuex.Store({
             }
         ]
     },
+    proyectos: [
+        {
+            identificador: 'A',
+            descripcion: '',
+            costo: ''
+        },
+        {
+            identificador: 'B',
+            descripcion: '',
+            costo: ''
+        },
+        {
+            identificador: 'C',
+            descripcion: '',
+            costo: ''
+        },
+        {
+            identificador: 'D',
+            descripcion: '',
+            costo: ''
+        }
+    ],
     mutations: {
         addCriterio: (state, nuevo) => {
             state.criterios.push(nuevo);
@@ -43,7 +65,6 @@ const store = new Vuex.Store({
 
 //Componente Inicial de Criterios
 let Tabla = {
-    
     computed: { //Métodos reactivos
         criterios() {
             return store.state.criterios
