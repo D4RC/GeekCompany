@@ -271,9 +271,16 @@ let estructura = {
         console.log(this.Scriterios)
     },
     methods: {
+        proyectos() {
+            var l=store.state.proyectos.map(criterio=>criterio.identificador)
+            console.log(l)
+            return l
+        },
         estructura() {
             return store.state.criterios.map((criterio)=>{
                 var fila = {}
+                fila['nombre'] = criterio.criterio;
+                fila['ponderacion'] = criterio.ponderacion;
                 fila['tipo'] = (criterio.tipo==='Cuantitativo')? true:false;
                 fila['orden'] = (criterio.mejor_calif==='mayor')? true:false;
             
@@ -321,6 +328,13 @@ let estructura = {
                 this.prioridad(criterio)
             })
             this.priority=true
+        },
+        suma(x) {
+            var suma=[]
+            var cantidad_proyectos = x[0].proyectos.length;
+            for(let i=0; i<cantidad_proyectos; i++) 
+                suma[i]=x.map(criterio=>criterio.proyectos[i].prioridad*criterio.ponderacion/100).reduce((a,b)=>a+b,0);
+            return suma;
         }
     },
     template: `
@@ -329,10 +343,12 @@ let estructura = {
         <thead>
             <tr>
                 <th>Criterio</th>
+                <th v-for="(proyecto,i) in proyectos()" :key="i"> {{ proyecto }} </th>
             </tr>
         </thead>
         <tbody v-if="edicion">
             <tr v-for="(criterio,i) in Scriterios" :key="i">
+                <td> {{ criterio.nombre }} </td>
                 <td v-for="(proyecto,j) in criterio.proyectos" :key="j">
                     <input v-if="criterio.tipo" type="number" v-model.number="proyecto.valor">
                     <select v-else v-model.number="proyecto.valor">
@@ -347,10 +363,17 @@ let estructura = {
         </tbody>
         <tbody v-else>
             <tr v-for="(criterio,i) in Scriterios" :key="i">
-                    <td v-for="proyecto in criterio.proyectos" :key="proyecto.indice">
-                        <span v-if="priority"> {{ proyecto.prioridad }} </span>
-                        <span v-else> {{proyecto.valor }} </span>
-                    </td>
+                <td> {{ criterio.nombre }} </td>
+                <td v-for="proyecto in criterio.proyectos" :key="proyecto.indice">
+                    <span v-if="priority"> {{ proyecto.prioridad }} </span>
+                    <span v-else> {{proyecto.valor }} </span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td v-for="(suma,i) in suma(Scriterios)" :key="i">
+                    {{ suma }}
+                </td>
             </tr>
         </tbody>
     </table>
