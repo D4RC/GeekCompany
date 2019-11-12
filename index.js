@@ -6,7 +6,7 @@ const store = new Vuex.Store({
                 criterio: 'Duración (en meses)',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'Menor' 
+                mejor_calif: 'Menor'
             },
             {
                 criterio: 'Valor presente neto',
@@ -37,25 +37,31 @@ const store = new Vuex.Store({
             {
                 identificador: 'A',
                 descripcion: '',
-                costo: '0',
+                costo: 30000,
                 prioridad: null
             },
             {
                 identificador: 'B',
                 descripcion: '',
-                costo: '0',
+                costo: 30000,
                 prioridad: null
             },
             {
                 identificador: 'C',
                 descripcion: '',
-                costo: '0',
+                costo: 10000,
                 prioridad: null
             },
             {
                 identificador: 'D',
                 descripcion: '',
-                costo: '0',
+                costo: 60000,
+                prioridad: null
+            },
+            {
+                identificador: 'E',
+                descripcion: '',
+                costo: 60000,
                 prioridad: null
             }
         ],
@@ -69,6 +75,9 @@ const store = new Vuex.Store({
                 state.proyectos[el.index].prioridad=i+1;
             })
             console.log(state.proyectos);
+        },
+        addProyecto:(state, nuevo)=>{
+            state.proyectos.push(nuevo);
         }
     }
 })
@@ -248,8 +257,9 @@ let principal = {
                 </span>
                 <span>Añadir criterio</span>
             </a>
+            <a class="button" href="./index.html#/s"><button class="learn-more"> Siguiente </button></a>
         </div>
-        
+
         <div class="modal is-active"
             v-show="mostrar"
             @close="mostrar=false"
@@ -391,7 +401,7 @@ let estructura = {
             <tr>
                 <td></td>
                 <td v-for="(suma,i) in suma(Scriterios)" :key="i">
-                    {{ suma }}
+                    {{ suma.toFixed(2) }}
                 </td>
             </tr>
         </tbody>
@@ -403,6 +413,11 @@ let estructura = {
 }
 
 let proyectosOrdenados = {
+    data() {
+        return {
+            presupuesto: 0
+        }
+    },
     computed: {
         proyectosPorPrioridad() {
             return store.state.proyectos.sort((a,b)=>{return a.prioridad-b.prioridad})
@@ -410,30 +425,139 @@ let proyectosOrdenados = {
     },
     template:`
     <div>
-    <table class="table is-striped">
-        <thead>
-            <tr>
-                <th>Prioridad</th>
-                <th>Proyecto</th>
-                <th>Costo</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="proyecto in proyectosPorPrioridad">
-                <td>{{proyecto.prioridad}}</td>
-                <td>{{proyecto.identificador}}</td>
-                <td>{{proyecto.costo}}</td>
-            </tr>
-        </tbody>
-    </table>
+        <input type="number" v-model="presupuesto" placeholder="Presupuesto"></input>
+
+        <table class="table is-striped">
+            <thead>
+                <tr>
+                    <th>Prioridad</th>
+                    <th>Proyecto</th>
+                    <th>Costo</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr v-for="proyecto in proyectosPorPrioridad">
+                    <td>{{proyecto.prioridad}}</td>
+                    <td>{{proyecto.identificador}}</td>
+                    <td>{{proyecto.costo}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div>
+            <div v-for="proyecto in proyectosPorPrioridad">
+                <input class="input" :value="proyecto.identificador" readonly v-bind:class="{'is-danger':(proyecto.costo<=presupuesto)}">
+            </div>
+        </div>
     </div>`
+}
+
+let nuevoProyecto={
+    data(){
+        return {
+            nuevo: {
+                identificador: '',
+                costo: 0,
+                descripcion: '',
+                prioridad: null
+            }
+        }
+    },
+    methods: {
+        Agregar: function(){
+            store.commit('addProyecto', Object.assign({}, this.nuevo))
+
+            //Reiniciar 
+            this.nuevo.identificador=''
+            this.nuevo.costo=0
+            this.nuevo.descripcion=''
+        }
+    },
+    computed: {
+      Proyectos() {
+            console.log(store.state.proyectos);
+            return store.state.proyectos; 
+        }  
+    },
+    template: `
+    <div>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label">Identificador</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <p class="control is-expanded">
+                        <input class="input" v-model="nuevo.identificador" type="text" placeholder="Identificador del proyecto">
+                    </p>
+                </div>
+            </div>
+        </div>
+
+         <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label">Costo</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <p class="control is-expanded">
+                        <input v-model.number="nuevo.costo" class="input" type="number" placeholder="Costo del proyecto">
+                    </p>
+                </div>
+            </div>
+        </div>
+
+         <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label">Descripción</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                <div class="control">
+                <textarea class="textarea" v-model="nuevo.descripcion" placeholder="Descripción del proyecto"></textarea>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label">
+                <!-- Left empty for spacing -->
+        </div>
+            <div class="field-body">
+                <div class="field">
+            <div class="control">
+                <button @click="Agregar" class="button is-primary">
+                    Añadir proyecto
+                </button>
+            </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label">
+               <label class="label">Proyectos registrados</label>
+             </div>
+            <div class="field-body">
+                <div v-for="(pr,i) in Proyectos">
+                    <span>{{pr.identificador}}</span>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+    `
 }
 
 //Direcciones
 const routes = [
     {path: '/', component: principal},
     {path: '/s', component: estructura},
-    {path: '/a', component: proyectosOrdenados}
+    {path: '/a', component: proyectosOrdenados},
+    {path: '/np', component: nuevoProyecto}
 ]
 
 const router = new VueRouter({
@@ -444,4 +568,3 @@ const router = new VueRouter({
 var app = new Vue({
     router
 }).$mount('#app')
-
