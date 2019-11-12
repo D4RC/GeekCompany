@@ -6,44 +6,75 @@ const store = new Vuex.Store({
                 criterio: 'Duración (en meses)',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'menor' 
+                mejor_calif: 'Menor' 
             },
             {
                 criterio: 'Valor presente neto',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'mayor'
+                mejor_calif: 'Mayor'
             },
             {
                 criterio: 'Período de recuperación de la inversión (en meses)',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'menor'
+                mejor_calif: 'Menor'
             },
             {
                 criterio: 'Riesgo',
                 tipo: 'Cualitativo',
                 ponderacion: 20,
-                mejor_calif: 'menor'
+                mejor_calif: 'Menor'
             },
             {
                 criterio: 'Generación de tecnología propia',
                 tipo: 'Cualitativo',
                 ponderacion: 20,
-                mejor_calif: 'mayor'
+                mejor_calif: 'Mayor'
             }
-        ]
+        ],
+        proyectos: [
+            {
+                identificador: 'A',
+                descripcion: '',
+                costo: '0',
+                prioridad: null
+            },
+            {
+                identificador: 'B',
+                descripcion: '',
+                costo: '0',
+                prioridad: null
+            },
+            {
+                identificador: 'C',
+                descripcion: '',
+                costo: '0',
+                prioridad: null
+            },
+            {
+                identificador: 'D',
+                descripcion: '',
+                costo: '0',
+                prioridad: null
+            }
+        ],
     },
     mutations: {
         addCriterio: (state, nuevo) => {
             state.criterios.push(nuevo);
+        },
+        determinarPrioridad: (state, orden) => {
+            orden.map((el,i)=>{
+                state.proyectos[el.index].prioridad=i+1;
+            })
+            console.log(state.proyectos);
         }
     }
 })
 
 //Componente Inicial de Criterios
 let Tabla = {
-    
     computed: { //Métodos reactivos
         criterios() {
             return store.state.criterios
@@ -61,8 +92,8 @@ let Tabla = {
                     <th>Ponderación</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr v-for="(criterio,i) in criterios" :key="i">
+            <tbody name="list" is="transition-group">
+                <tr v-for="(criterio,i) in criterios" :key="criterio.criterio">
                     <td> {{ criterio.criterio }} </td>
                     <td>
                         <span 
@@ -197,18 +228,16 @@ let principal = {
     },
     template: `
     <div>
-        <!--
         <section class="hero is-dark is-bold">
             <div class="hero-body">
               <div class="container">
                 <h1 class="title">
-                  Establecimiento de criterios
+                  Selección estrategica de proyectos
                 </h1>
-                <h2 class="subtitle"></h2>
+                <h2 class="subtitle">Establecimiento de criterios</h2>
               </div>
             </div>
         </section>
-        -->
 
         <section class="section">
         <div class="container">
@@ -237,9 +266,174 @@ let principal = {
     `
 }
 
+let estructura = {
+    data() {
+        return {
+            Scriterios: {},
+            edicion: true,
+            priority: false
+        }
+    },
+    created() {
+        this.Scriterios = this.estructura();
+    },
+    methods: {
+        proyectos() {
+            var l=store.state.proyectos.map(criterio=>criterio.identificador)
+            return l
+        },
+        estructura() {
+            return store.state.criterios.map((criterio)=>{
+                var fila = {}
+                fila['nombre'] = criterio.criterio;
+                fila['ponderacion'] = criterio.ponderacion;
+                fila['tipo'] = (criterio.tipo==='Cuantitativo')? true:false;
+                fila['orden'] = (criterio.mejor_calif==='Mayor')? true:false;
+            
+                var columnas = store.state.proyectos.map((proyecto, i)=>{
+                    var columna = {}
+                    columna['indice'] = i;
+                    columna['valor'] = null;
+                    columna['prioridad'] = null;
+                    return columna
+                })
+                fila['proyectos'] = columnas;
+                return fila;
+            })
+        },
+        ordenar(x) {
+            //Considerando[omitiendo] una previa conversión cuantitativa de los valores cualitativos
+            if(x.orden)
+                x.proyectos.sort((a,b)=>{return a.valor-b.valor});
+            else 
+                x.proyectos.sort((a,b)=>{return b.valor-a.valor});
+        },
+        prioridad(x) {
+            //Asignación de prioridad basada en ordenamiento
+            x.proyectos.map((proyecto,i)=> {
+                proyecto.prioridad = 2*i + 1;
+            })
+            
+            //Restricción a criterios empatados
+            x.proyectos.forEach((proyecto,i) => {
+                if(i!==0)
+                    if(proyecto.valor===x.proyectos[i-1].valor)
+                        proyecto.prioridad=x.proyectos[i-1].prioridad;
+            });
+            
+            //Restructuración del orden indexado
+            x.proyectos.sort((a,b)=>{return a.indice-b.indice});
+        },
+        calcular() {
+            this.edicion=false
+            this.Scriterios.map((criterio)=>{
+                this.ordenar(criterio)
+            })
+            
+            this.Scriterios.map((criterio)=>{
+                this.prioridad(criterio)
+            })
+            
+            this.priority=true
+            this.prioridad_final();
+        },
+        suma(x) {
+            var suma=[]
+            var cantidad_proyectos = x[0].proyectos.length;
+            for(let i=0; i<cantidad_proyectos; i++) 
+                suma[i]=x.map(criterio=>criterio.proyectos[i].prioridad*criterio.ponderacion/100).reduce((a,b)=>a+b,0);
+            return suma;
+        },
+        prioridad_final() { //Hace el commit de la prioridad del proyecto en el estado
+            var mapa = this.suma(this.Scriterios).map(function(el,i) {
+                return {index: i, value: el};
+            })
+            mapa.sort((a,b)=>{
+                if(a.value<b.value) {return 1;}
+                if(a.value>b.value) {return -1;}
+                return 0;
+            });
+            store.commit('determinarPrioridad',mapa)
+        }
+    },
+    template: `
+    <div>
+    <table class="table is-striped">
+        <thead>
+            <tr>
+                <th>Criterio</th>
+                <th v-for="(proyecto,i) in proyectos()" :key="i"> {{ proyecto }} </th>
+            </tr>
+        </thead>
+        <tbody v-if="edicion">
+            <tr v-for="(criterio,i) in Scriterios" :key="i">
+                <td> {{ criterio.nombre }} </td>
+                <td v-for="(proyecto,j) in criterio.proyectos" :key="j">
+                    <input v-if="criterio.tipo" type="number" v-model.number="proyecto.valor">
+                    <select v-else v-model.number="proyecto.valor">
+                        <option value="1">Muy bajo</option>
+                        <option value="2">Bajo</option>
+                        <option value="3">Moderado</option>
+                        <option value="4">Alto</option>
+                        <option value="5">Muy alto</option>
+                    </select>
+                </td>
+            </tr>
+        </tbody>
+        <tbody v-else>
+            <tr v-for="(criterio,i) in Scriterios" :key="i">
+                <td> {{ criterio.nombre }} </td>
+                <td v-for="proyecto in criterio.proyectos" :key="proyecto.indice">
+                    <span v-if="priority"> {{ proyecto.prioridad }} </span>
+                    <span v-else> {{proyecto.valor }} </span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td v-for="(suma,i) in suma(Scriterios)" :key="i">
+                    {{ suma }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button @click="calcular">Calcular</button>
+    </div>
+    `
+}
+
+let proyectosOrdenados = {
+    computed: {
+        proyectosPorPrioridad() {
+            return store.state.proyectos.sort((a,b)=>{return a.prioridad-b.prioridad})
+        }
+    },
+    template:`
+    <div>
+    <table class="table is-striped">
+        <thead>
+            <tr>
+                <th>Prioridad</th>
+                <th>Proyecto</th>
+                <th>Costo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="proyecto in proyectosPorPrioridad">
+                <td>{{proyecto.prioridad}}</td>
+                <td>{{proyecto.identificador}}</td>
+                <td>{{proyecto.costo}}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>`
+}
+
 //Direcciones
 const routes = [
-    {path: '/', component: principal}
+    {path: '/', component: principal},
+    {path: '/s', component: estructura},
+    {path: '/a', component: proyectosOrdenados}
 ]
 
 const router = new VueRouter({
@@ -250,3 +444,4 @@ const router = new VueRouter({
 var app = new Vue({
     router
 }).$mount('#app')
+
