@@ -57,12 +57,6 @@ const store = new Vuex.Store({
                 descripcion: '',
                 costo: 60000,
                 prioridad: null
-            },
-            {
-                identificador: 'E',
-                descripcion: '',
-                costo: 60000,
-                prioridad: null
             }
         ],
     },
@@ -424,30 +418,54 @@ let proyectosOrdenados = {
         }
     },
     template:`
-    <div>
-        <input type="number" v-model="presupuesto" placeholder="Presupuesto"></input>
+    <div class="container">
+        <div class="field is-horizontal">
+            <div class="field-label">
+                <label class="label">Presupuesto de inversión</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" v-model="presupuesto">
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <table class="table is-striped">
-            <thead>
-                <tr>
-                    <th>Prioridad</th>
-                    <th>Proyecto</th>
-                    <th>Costo</th>
-                </tr>
-            </thead>
+        <div class="columns">
+            <div class="column">
+            </div>
+            <div class="column is-narrow">
+                <table class="table is-striped">
+                    <thead>
+                        <tr>
+                            <th>Prioridad</th>
+                            <th>Proyecto</th>
+                            <th>Costo</th>
+                        </tr>
+                    </thead>
 
-            <tbody>
-                <tr v-for="proyecto in proyectosPorPrioridad">
-                    <td>{{proyecto.prioridad}}</td>
-                    <td>{{proyecto.identificador}}</td>
-                    <td>{{proyecto.costo}}</td>
-                </tr>
-            </tbody>
-        </table>
+                    <tbody>
+                        <tr v-for="proyecto in proyectosPorPrioridad">
+                            <td>{{proyecto.prioridad}}</td>
+                            <td>{{proyecto.identificador}}</td>
+                            <td>{{proyecto.costo}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        <div>
-            <div v-for="proyecto in proyectosPorPrioridad">
-                <input class="input" :value="proyecto.identificador" readonly v-bind:class="{'is-danger':(proyecto.costo<=presupuesto)}">
+        <div class="columns">
+            <div class="column is-3">
+                <p class="label">Proyectos prioritarios ejecutables con el presupuesto de inversión</p>
+            </div>
+            <div class="column is-narrow">
+                <ul v-for="proyecto in proyectosPorPrioridad">
+                    <li v-if="proyecto.costo<=presupuesto">{{proyecto.identificador}}</li>
+                </ul>
+            </div>
+            <div class="column">
             </div>
         </div>
     </div>`
@@ -458,7 +476,7 @@ let nuevoProyecto={
         return {
             nuevo: {
                 identificador: '',
-                costo: 0,
+                costo: null,
                 descripcion: '',
                 prioridad: null
             }
@@ -481,7 +499,7 @@ let nuevoProyecto={
         }  
     },
     template: `
-    <div>
+    <div class="container">
         <div class="field is-horizontal">
             <div class="field-label is-normal">
                 <label class="label">Identificador</label>
@@ -514,9 +532,9 @@ let nuevoProyecto={
             </div>
             <div class="field-body">
                 <div class="field">
-                <div class="control">
-                <textarea class="textarea" v-model="nuevo.descripcion" placeholder="Descripción del proyecto"></textarea>
-                </div>
+                    <div class="control">
+                        <textarea class="textarea" v-model="nuevo.descripcion" placeholder="Descripción del proyecto"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -541,8 +559,12 @@ let nuevoProyecto={
                <label class="label">Proyectos registrados</label>
              </div>
             <div class="field-body">
-                <div v-for="(pr,i) in Proyectos">
-                    <span>{{pr.identificador}}</span>
+                <div class="field">
+                    <div class="control box">
+                        <p v-for="pr in Proyectos">   
+                            {{pr.identificador}}    {{pr.costo}}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
