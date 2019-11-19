@@ -6,31 +6,36 @@ const store = new Vuex.Store({
                 criterio: 'Duración (en meses)',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'Menor'
+                mejor_calif: 'Menor',
+                eliminable: false 
             },
             {
                 criterio: 'Valor presente neto',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'Mayor'
+                mejor_calif: 'Mayor',
+                eliminable: false 
             },
             {
                 criterio: 'Período de recuperación de la inversión (en meses)',
                 tipo: 'Cuantitativo',
                 ponderacion: 20,
-                mejor_calif: 'Menor'
+                mejor_calif: 'Menor',
+                eliminable: false 
             },
             {
                 criterio: 'Riesgo',
                 tipo: 'Cualitativo',
                 ponderacion: 20,
-                mejor_calif: 'Menor'
+                mejor_calif: 'Menor',
+                eliminable: false 
             },
             {
                 criterio: 'Generación de tecnología propia',
                 tipo: 'Cualitativo',
                 ponderacion: 20,
-                mejor_calif: 'Mayor'
+                mejor_calif: 'Mayor',
+                eliminable: false 
             }
         ],
         proyectos: [
@@ -76,72 +81,6 @@ const store = new Vuex.Store({
     }
 })
 
-//Componente Inicial de Criterios
-let Tabla = {
-    computed: { //Métodos reactivos
-        criterios() {
-            return store.state.criterios
-        },
-        total() {
-            return this.criterios.map(criterio=>criterio.ponderacion).reduce((a,b)=>a+b,0);
-        }
-    },
-    template:`
-        <table class="table is-striped">
-            <thead>
-                <tr>
-                    <th>Criterio</th>
-                    <th>Tipo</th>
-                    <th>Ponderación</th>
-                </tr>
-            </thead>
-            <tbody name="list" is="transition-group">
-                <tr v-for="(criterio,i) in criterios" :key="criterio.criterio">
-                    <td> {{ criterio.criterio }} </td>
-                    <td>
-                        <span 
-                            class="tag"
-                            v-bind:class="{'is-primary':(criterio.tipo==='Cualitativo'), 'is-info':(criterio.tipo==='Cuantitativo')}"
-                        > {{ criterio.tipo }} </span>
-        
-                    </td>
-                    <td>
-                        <div class="control">
-                            <input class="input" type="number" v-model.number="criterio.ponderacion">
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                <td>
-                    <!--
-                    <button class="button is-light">
-                        <span class="icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </span>
-                        <span>Añadir criterio</span>
-                    </button>
-                    -->
-                </td>
-                <th>Total</th>
-                <th>
-                    <div class="field">
-                        <div class="control has-icons-right">
-                            <input class="input" type="number" :value="this.total" readonly v-bind:class="{'is-danger':(this.total>100)}">
-                            <span v-if="this.total>100" class="icon is-small is-right">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </span>
-                        </div>
-                        <p v-if="this.total>100" class="help is-danger">La suma excede el 100%</p>
-                    </div>
-                </th>
-                </tr>
-            </tfoot>
-        </table>
-    `
-};
-
 //Componente para añadir nuevos criterios
 let PanelAgregar = {
     data() { //Estado local del componente
@@ -150,7 +89,8 @@ let PanelAgregar = {
                 criterio: '',
                 tipo: '',
                 ponderacion: 0,
-                mejor_calif: ''
+                mejor_calif: '',
+                eliminable: true
             }
         }
     },
@@ -218,6 +158,109 @@ let PanelAgregar = {
     </div>`
 }
 
+//Componente Inicial de Criterios
+let Tabla = {
+    data() {
+        return {
+            mostrar: false
+        }
+    },
+    components: {
+        'agregar': PanelAgregar
+    },
+    computed: { //Métodos reactivos
+        criterios() {
+            return store.state.criterios
+        },
+        total() {
+            return this.criterios.map(criterio=>criterio.ponderacion).reduce((a,b)=>a+b,0);
+        }
+    },
+    methods: {
+        eliminar(i) {
+            store.state.criterios.splice(i,1);
+        }
+    },
+    template:`
+    <div>
+        <table class="table is-striped">
+            <thead>
+                <tr>
+                    <th>Criterio</th>
+                    <th>Tipo</th>
+                    <th>Ponderación</th>
+                </tr>
+            </thead>
+            <tbody name="list" is="transition-group">
+                <tr v-for="(criterio,i) in criterios" :key="criterio.criterio">
+                    <td> {{ criterio.criterio }} </td>
+                    <td>
+                        <span 
+                            class="tag"
+                            v-bind:class="{'is-primary':(criterio.tipo==='Cualitativo'), 'is-info':(criterio.tipo==='Cuantitativo')}"
+                        > {{ criterio.tipo }} </span>
+        
+                    </td>
+                    <td>
+                        <div class="control">
+                            <input class="input" type="number" v-model.number="criterio.ponderacion">
+                        </div>
+                        <div v-if="criterio.eliminable"><button @click="eliminar(i)">Eliminar</button></div>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                <td>
+                    <!--
+                    <button class="button is-light">
+                        <span class="icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </span>
+                        <span>Añadir criterio</span>
+                    </button>
+                    -->
+                </td>
+                <th>Total</th>
+                <th>
+                    <div class="field">
+                        <div class="control has-icons-right">
+                            <input class="input" type="number" :value="this.total" readonly v-bind:class="{'is-danger':(this.total>100)}">
+                            <span v-if="this.total>100" class="icon is-small is-right">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                        </div>
+                        <p v-if="this.total>100" class="help is-danger">La suma excede el 100%</p>
+                    </div>
+                </th>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="modal is-active"
+            v-show="mostrar"
+            @close="mostrar=false"
+        >
+            <div class="modal-background" v-on:click="mostrar=false"></div>
+            <div class="modal-content">
+                <agregar v-on:no-mostrar="mostrar=false"></agregar>
+            </div>
+            <button class="modal-close is-large"
+            @click="mostrar=false"></button>
+        </div>
+
+        <a class="button" v-on:click="mostrar=true">
+            <span class="icon">
+                <i class="fas fa-plus-circle"></i>
+            </span>
+            <span>Añadir criterio</span>
+        </a>
+        <router-link class="button" to="/proyectos">Siguiente</router-link>
+    </div>
+    `
+};
+
+
 //Vista principal
 let principal = {
     components: {
@@ -237,34 +280,30 @@ let principal = {
                 <h1 class="title">
                   Selección estrategica de proyectos
                 </h1>
-                <h2 class="subtitle">Establecimiento de criterios</h2>
+                <h2 class="subtitle">{{this.$route.name}}</h2>
               </div>
+            </div>
+
+            <div class="hero-foot">
+                <nav class="tabs">
+                  <div class="container">
+                    <ul>
+                        <li><router-link to="/criterios">Criterios</router-link></li>
+                        <li><router-link to="/proyectos">Proyectos</router-link></li>
+                        <li><router-link to="/datos">Datos</router-link></li>
+                        <li><router-link to="/orden">Presupuesto</router-link></li>
+                      </ul>
+                  </div>
+                </nav>
             </div>
         </section>
 
         <section class="section">
         <div class="container">
-            <tabla></tabla>
-            <a class="button" v-on:click="mostrar=true">
-                <span class="icon">
-                    <i class="fas fa-plus-circle"></i>
-                </span>
-                <span>Añadir criterio</span>
-            </a>
-            <a class="button" href="./index.html#/s"><button class="learn-more"> Siguiente </button></a>
+            <router-view></router-view>
         </div>
 
-        <div class="modal is-active"
-            v-show="mostrar"
-            @close="mostrar=false"
-        >
-            <div class="modal-background" v-on:click="mostrar=false"></div>
-            <div class="modal-content">
-                <agregar v-on:no-mostrar="mostrar=false"></agregar>
-            </div>
-            <button class="modal-close is-large"
-            @click="mostrar=false"></button>
-        </div>
+        
         </section>
     </div>
     `
@@ -361,7 +400,7 @@ let estructura = {
         }
     },
     template: `
-    <div>
+    <div class="container">  
     <table class="table is-striped">
         <thead>
             <tr>
@@ -409,12 +448,31 @@ let estructura = {
 let proyectosOrdenados = {
     data() {
         return {
-            presupuesto: 0
+            presupuesto: 0,
+            viables: []
         }
     },
     computed: {
         proyectosPorPrioridad() {
             return store.state.proyectos.sort((a,b)=>{return a.prioridad-b.prioridad})
+        }
+    },
+    methods: {
+         calcularViables() {
+            var pr = store.state.proyectos.sort((a,b)=>{return a.prioridad-b.prioridad});
+            this.viables=[];
+            var auxp = this.presupuesto;
+            for(let i=0; i<pr.length; i++)
+            {
+                if(pr[i].costo<=auxp) {
+                    this.viables.push(pr[i]);
+                    auxp-=pr[i].costo;
+                }
+            }
+            if(this.viables.length==0)
+            {
+                this.viables.push({identificador: 'El presupuesto no alcanza para ningún proyecto'})
+            }
         }
     },
     template:`
@@ -426,16 +484,14 @@ let proyectosOrdenados = {
             <div class="field-body">
                 <div class="field">
                     <div class="control">
-                        <input class="input" type="number" v-model="presupuesto">
+                        <input class="input" type="number" v-model="presupuesto" v-on:change="calcularViables()">
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="columns">
-            <div class="column">
-            </div>
-            <div class="column is-narrow">
+            <div class="column is-half">
                 <table class="table is-striped">
                     <thead>
                         <tr>
@@ -461,8 +517,8 @@ let proyectosOrdenados = {
                 <p class="label">Proyectos prioritarios ejecutables con el presupuesto de inversión</p>
             </div>
             <div class="column is-narrow">
-                <ul v-for="proyecto in proyectosPorPrioridad">
-                    <li v-if="proyecto.costo<=presupuesto">{{proyecto.identificador}}</li>
+                <ul v-for="proyecto in viables">
+                    <li>{{proyecto.identificador}}</li>
                 </ul>
             </div>
             <div class="column">
@@ -490,6 +546,9 @@ let nuevoProyecto={
             this.nuevo.identificador=''
             this.nuevo.costo=0
             this.nuevo.descripcion=''
+        },
+        eliminar: function(x) {
+            store.state.proyectos.splice(x,1);
         }
     },
     computed: {
@@ -561,9 +620,11 @@ let nuevoProyecto={
             <div class="field-body">
                 <div class="field">
                     <div class="control box">
-                        <p v-for="pr in Proyectos">   
-                            {{pr.identificador}}    {{pr.costo}}
-                        </p>
+                        <div v-for="(pr,i) in Proyectos">   
+                            {{pr.identificador}}
+                            <input type="number" v-model="pr.costo"></input>
+                            <button @click="eliminar(i)">Eliminar</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -576,6 +637,33 @@ let nuevoProyecto={
 
 //Direcciones
 const routes = [
+    {
+        path: '/index',
+        name: 'index',
+        component: principal,
+        children: [
+            {
+                path: '/criterios',
+                component: Tabla,
+                name: 'Establecimiento de criterios'
+            },
+            {
+                path: '/proyectos',
+                component: nuevoProyecto,
+                name: 'Registro de proyectos'
+            },
+            {
+                path: '/datos',
+                component: estructura,
+                name: 'Asignación de valores por proyecto y criterio'
+            },
+            {
+                path: '/orden',
+                component: proyectosOrdenados,
+                name: 'Ánalisis de costos'
+            }
+        ]
+    },
     {path: '/', component: principal},
     {path: '/s', component: estructura},
     {path: '/a', component: proyectosOrdenados},
