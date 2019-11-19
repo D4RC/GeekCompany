@@ -203,7 +203,7 @@ let Tabla = {
                     </td>
                     <td>
                         <div class="control">
-                            <input class="input" type="number" v-model.number="criterio.ponderacion">
+                            <input class="input" type="number" v-model.number="criterio.ponderacion" min="0" max="100">
                         </div>
                         <div v-if="criterio.eliminable"><button @click="eliminar(i)">Eliminar</button></div>
                     </td>
@@ -255,7 +255,7 @@ let Tabla = {
             </span>
             <span>Añadir criterio</span>
         </a>
-        <router-link class="button" to="/proyectos">Siguiente</router-link>
+        <router-link v-if="this.total==100" class="button" to="/proyectos">Siguiente</router-link>
     </div>
     `
 };
@@ -314,7 +314,8 @@ let estructura = {
         return {
             Scriterios: {},
             edicion: true,
-            priority: false
+            priority: false,
+            calculado: false
         }
     },
     created() {
@@ -379,6 +380,7 @@ let estructura = {
             
             this.priority=true
             this.prioridad_final();
+            this.calculado=true
         },
         suma(x) {
             var suma=[]
@@ -412,14 +414,18 @@ let estructura = {
             <tr v-for="(criterio,i) in Scriterios" :key="i">
                 <td> {{ criterio.nombre }} </td>
                 <td v-for="(proyecto,j) in criterio.proyectos" :key="j">
-                    <input v-if="criterio.tipo" type="number" v-model.number="proyecto.valor">
-                    <select v-else v-model.number="proyecto.valor">
-                        <option value="1">Muy bajo</option>
-                        <option value="2">Bajo</option>
-                        <option value="3">Moderado</option>
-                        <option value="4">Alto</option>
-                        <option value="5">Muy alto</option>
-                    </select>
+                    <div class="control">
+                    <input class="input" v-if="criterio.tipo" type="number" v-model.number="proyecto.valor">
+                        <div v-else class="select is-small">
+                        <select v-model.number="proyecto.valor">
+                            <option value="1">Muy bajo</option>
+                            <option value="2">Bajo</option>
+                            <option value="3">Moderado</option>
+                            <option value="4">Alto</option>
+                            <option value="5">Muy alto</option>
+                        </select>
+                        </div>
+                    </div>
                 </td>
             </tr>
         </tbody>
@@ -440,7 +446,12 @@ let estructura = {
         </tbody>
     </table>
     
-    <button @click="calcular">Calcular</button>
+   
+    <button class="button is-primary" @click="calcular">Calcular</button>
+    <router-link v-if="calculado" to="orden" class="button">Siguiente</button>
+    
+
+
     </div>
     `
 }
@@ -629,6 +640,8 @@ let nuevoProyecto={
                 </div>
             </div>
         </div>
+
+        <router-link to="/datos" class="button">Siguiente</button>
 
         </div>
     </div>
